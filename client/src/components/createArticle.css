@@ -1,0 +1,62 @@
+.container {
+    .container {
+        width: 50%;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        
+        /* Center the form horizontally */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh; /* Make the container full height of the viewport */
+      }
+      
+    }
+    .mt-5 {
+    margin-top: 50px;
+    }
+    .mb-4 {
+    margin-bottom: 40px;
+    }
+    .form-control {
+    margin-bottom: 20px;
+    }
+    .custom-button {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        }
+        .custom-button:hover {
+        background-color: #0056b3;
+        }
+        input,
+        textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        }
+
+        .btn-update {
+          display: inline-block;
+          padding: 8px 16px; /* Adjust padding to decrease button size */
+          background-color: #007bff;
+          color: #fff;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+        
+        .btn-update:hover {
+          background-color: #0056b3;
+        }
+               
+
+      

@@ -1,0 +1,63 @@
+.register-form {
+  min-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+.register-container{
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  grid-column: span 3;
+  }
+.register-form h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-group input[type='text'],
+.form-group input[type='password'] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+.error {
+  color: red;
+  margin-top: 5px;
+}
+
+.success {
+  color: green;
+  margin-top: 5px;
+}
+
+.btn-primary1{
+  display: block;
+  width: 100%;
+  padding: 8px 16px; 
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: #fff;
+  font-size: 15px; 
+  cursor: pointer;
+}
+
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
