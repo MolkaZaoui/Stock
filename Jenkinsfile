@@ -14,66 +14,14 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    echo 'Starting Git checkout...'
-                    git branch: 'main',
-                        url: 'https://github.com/MolkaZaoui/Stock.git',
-                        credentialsId: 'privatekey' // Jenkins credentials ID for GitLab SSH key
+                    echo 'Starting Git checkout....'
+                    git branch: 'version1',
+                        url: 'git@github.com:MolkaZaoui/Stock.git',
+                        credentialsId: 'privatekey' // Jenkins credentials ID for GitHub SSH key
                 }
             }
         }
 
-        stage('Build Images') {
-            parallel {
-                stage('Build Server Image') {
-                    steps {
-                        script {
-                            echo 'Building server image...'
-                            dir('backend') {
-                                dockerImageServer = docker.build("${IMAGE_NAME_SERVER}")
-                            }
-                        }
-                    }
-                }
-                stage('Build Client Image') {
-                    steps {
-                        script {
-                            echo 'Building client image...'
-                            dir('client') {
-                                dockerImageClient = docker.build("${IMAGE_NAME_CLIENT}")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Scan Server Image') {
-            steps {
-                script {
-                    echo 'Scanning server image...'
-                    sh """
-                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \\
-                            aquasec/trivy:latest image --exit-code 1 \\
-                            --severity LOW,MEDIUM,HIGH,CRITICAL \\
-                            ${IMAGE_NAME_SERVER} || exit 1
-                    """
-                }
-            }
-        }
-
-        stage('Scan Client Image') {
-            steps {
-                script {
-                    echo 'Scanning client image...'
-                    sh """
-                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \\
-                            aquasec/trivy:latest image --exit-code 1 \\
-                            --severity LOW,MEDIUM,HIGH,CRITICAL \\
-                            ${IMAGE_NAME_CLIENT} || exit 1
-                    """
-                }
-            }
-        }
         stage('Check for Changes') {
             steps {
                 script {
@@ -102,21 +50,107 @@ pipeline {
             }
         }
 
-        stage('Push Images to Docker Hub') {
-            steps {
-                script {
-                    echo 'Pushing images to Docker Hub...'
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                        sh """
-                            docker login -u ${USERNAME} -p ${PASSWORD} || exit 1
-                        """
-                        dockerImageServer.push("${BUILD_NUMBER}") // Use build number for tagging
-                        dockerImageClient.push("${BUILD_NUMBER}")
+        stage('Build Images') {
+            parallel {
+                stage('Build Backend Image') {
+                    when {
+                        environment name: 'BACKEND_CHANGED', value: 'true'
+                    }
+                    steps {
+                        script {
+                            echo 'Building backend image....'
+                            dir('backend') {
+                                dockerImageServer = docker.build("${IMAGE_NAME_SERVER}")
+                            }
+                        }
+                    }
+                }
+                stage('Build Frontend Image') {
+                    when {
+                        environment name: 'FRONTEND_CHANGED', value: 'true'
+                    }
+                    steps {
+                        script {
+                            echo 'Building frontend image....'
+                            dir('client') {
+                                dockerImageClient = docker.build("${IMAGE_NAME_CLIENT}")
+                            }
+                        }
                     }
                 }
             }
         }
 
+        stage('Scan Backend Image') {
+            when {
+                environment name: 'BACKEND_CHANGED', value: 'true'
+            }
+            steps {
+                script {
+                    echo 'Scanning backend image...'
+                    sh """
+                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy:latest image --exit-code 1 \
+                            --severity LOW,MEDIUM,HIGH,CRITICAL \
+                            ${IMAGE_NAME_SERVER} || exit 1
+                    """
+                }
+            }
+        }
+
+        stage('Scan Frontend Image') {
+            when {
+                environment name: 'FRONTEND_CHANGED', value: 'true'
+            }
+            steps {
+                script {
+                    echo 'Scanning frontend image...'
+                    sh """
+                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy:latest image --exit-code 1 \
+                            --severity LOW,MEDIUM,HIGH,CRITICAL \
+                            ${IMAGE_NAME_CLIENT} || exit 1
+                    """
+                }
+            }
+        }
+
+        stage('Push Images to Docker Hub') {
+            parallel {
+                stage('Push Backend Image') {
+                    when {
+                        environment name: 'BACKEND_CHANGED', value: 'true'
+                    }
+                    steps {
+                        script {
+                            echo 'Pushing backend image to Docker Hub...'
+                            withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                                sh """
+                                    docker login -u ${USERNAME} -p ${PASSWORD} || exit 1
+                                """
+                                dockerImageServer.push("${BUILD_NUMBER}") // Use build number for tagging
+                            }
+                        }
+                    }
+                }
+                stage('Push Frontend Image') {
+                    when {
+                        environment name: 'FRONTEND_CHANGED', value: 'true'
+                    }
+                    steps {
+                        script {
+                            echo 'Pushing frontend image to Docker Hub...'
+                            withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                                sh """
+                                    docker login -u ${USERNAME} -p ${PASSWORD} || exit 1
+                                """
+                                dockerImageClient.push("${BUILD_NUMBER}")
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     post {
@@ -132,6 +166,9 @@ pipeline {
 
                 // Optionally remove unused volumes
                 sh 'docker volume prune -f'
+
+                // Remove intermediate images (unused builder images)
+                sh 'docker builder prune -f'
             }
         }
     }
