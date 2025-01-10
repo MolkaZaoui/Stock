@@ -14,7 +14,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    echo 'Starting Git checkout....'
+                    echo 'Starting Git checkout...'
                     git branch: 'version1',
                         url: 'git@github.com:MolkaZaoui/Stock.git',
                         credentialsId: 'privatekey' // Jenkins credentials ID for GitHub SSH key
@@ -28,24 +28,14 @@ pipeline {
                     echo 'Checking for changes in backend and frontend...'
 
                     // Detect changes in the backend folder
-                    def backendChanged = sh(script: 'git diff --name-only HEAD~1..HEAD backend', returnStdout: true).trim()
-                    if (backendChanged) {
-                        echo "Changes detected in backend"
-                        env.BACKEND_CHANGED = 'true'
-                    } else {
-                        echo "No changes detected in backend"
-                        env.BACKEND_CHANGED = 'false'
-                    }
+                    def backendChanged = sh(script: 'git diff --name-only HEAD~1 backend', returnStdout: true).trim()
+                    env.BACKEND_CHANGED = backendChanged ? 'true' : 'false'
+                    echo backendChanged ? "Changes detected in backend" : "No changes detected in backend"
 
                     // Detect changes in the frontend folder
-                    def frontendChanged = sh(script: 'git diff --name-only HEAD~1..HEAD frontend', returnStdout: true).trim()
-                    if (frontendChanged) {
-                        echo "Changes detected in frontend"
-                        env.FRONTEND_CHANGED = 'true'
-                    } else {
-                        echo "No changes detected in frontend"
-                        env.FRONTEND_CHANGED = 'false'
-                    }
+                    def frontendChanged = sh(script: 'git diff --name-only HEAD~1 frontend', returnStdout: true).trim()
+                    env.FRONTEND_CHANGED = frontendChanged ? 'true' : 'false'
+                    echo frontendChanged ? "Changes detected in frontend" : "No changes detected in frontend"
                 }
             }
         }
@@ -58,9 +48,9 @@ pipeline {
                     }
                     steps {
                         script {
-                            echo 'Building backend image....'
+                            echo 'Building backend image...'
                             dir('backend') {
-                                dockerImageServer = docker.build("${IMAGE_NAME_SERVER}")
+                                dockerImageServer = docker.build(IMAGE_NAME_SERVER)
                             }
                         }
                     }
@@ -71,9 +61,9 @@ pipeline {
                     }
                     steps {
                         script {
-                            echo 'Building frontend image....'
-                            dir('client') {
-                                dockerImageClient = docker.build("${IMAGE_NAME_CLIENT}")
+                            echo 'Building frontend image...'
+                            dir('frontend') {
+                                dockerImageClient = docker.build(IMAGE_NAME_CLIENT)
                             }
                         }
                     }
@@ -92,7 +82,7 @@ pipeline {
                         docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
                             aquasec/trivy:latest image --exit-code 1 \
                             --severity LOW,MEDIUM,HIGH,CRITICAL \
-                            ${IMAGE_NAME_SERVER} || exit 1
+                            ${IMAGE_NAME_SERVER}
                     """
                 }
             }
@@ -109,7 +99,7 @@ pipeline {
                         docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
                             aquasec/trivy:latest image --exit-code 1 \
                             --severity LOW,MEDIUM,HIGH,CRITICAL \
-                            ${IMAGE_NAME_CLIENT} || exit 1
+                            ${IMAGE_NAME_CLIENT}
                     """
                 }
             }
@@ -125,9 +115,7 @@ pipeline {
                         script {
                             echo 'Pushing backend image to Docker Hub...'
                             withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                                sh """
-                                    docker login -u ${USERNAME} -p ${PASSWORD} || exit 1
-                                """
+                                sh "docker login -u ${USERNAME} -p ${PASSWORD}"
                                 dockerImageServer.push("${BUILD_NUMBER}") // Use build number for tagging
                             }
                         }
@@ -141,9 +129,7 @@ pipeline {
                         script {
                             echo 'Pushing frontend image to Docker Hub...'
                             withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                                sh """
-                                    docker login -u ${USERNAME} -p ${PASSWORD} || exit 1
-                                """
+                                sh "docker login -u ${USERNAME} -p ${PASSWORD}"
                                 dockerImageClient.push("${BUILD_NUMBER}")
                             }
                         }
