@@ -17,7 +17,7 @@ pipeline {
                     echo 'Starting Git checkout...'
                     git branch: 'main',
                         url: 'https://github.com/MolkaZaoui/Stock.git',
-                        credentialsId: 'github' // Jenkins credentials ID for GitLab SSH key
+                        credentialsId: 'privatekey' // Jenkins credentials ID for GitLab SSH key
                 }
             }
         }
