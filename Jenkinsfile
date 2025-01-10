@@ -74,6 +74,33 @@ pipeline {
                 }
             }
         }
+        stage('Check for Changes') {
+            steps {
+                script {
+                    echo 'Checking for changes in backend and frontend...'
+
+                    // Detect changes in the backend folder
+                    def backendChanged = sh(script: 'git diff --name-only HEAD~1..HEAD backend', returnStdout: true).trim()
+                    if (backendChanged) {
+                        echo "Changes detected in backend"
+                        env.BACKEND_CHANGED = 'true'
+                    } else {
+                        echo "No changes detected in backend"
+                        env.BACKEND_CHANGED = 'false'
+                    }
+
+                    // Detect changes in the frontend folder
+                    def frontendChanged = sh(script: 'git diff --name-only HEAD~1..HEAD frontend', returnStdout: true).trim()
+                    if (frontendChanged) {
+                        echo "Changes detected in frontend"
+                        env.FRONTEND_CHANGED = 'true'
+                    } else {
+                        echo "No changes detected in frontend"
+                        env.FRONTEND_CHANGED = 'false'
+                    }
+                }
+            }
+        }
 
         stage('Push Images to Docker Hub') {
             steps {
@@ -89,6 +116,7 @@ pipeline {
                 }
             }
         }
+
     }
 
     post {
