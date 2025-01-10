@@ -123,23 +123,5 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            script {
-                echo 'Cleaning up Docker resources...'
-
-                // Remove dangling images (intermediate images with no tags)
-                sh 'docker image prune -f'
-
-                // Remove stopped containers
-                sh 'docker container prune -f'
-
-                // Optionally remove unused volumes
-                sh 'docker volume prune -f'
-
-                // Remove intermediate images (unused builder images)
-                sh 'docker builder prune -f'
-            }
-        }
-    }
+   
 }
