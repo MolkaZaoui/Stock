@@ -16,7 +16,7 @@ pipeline {
                 script {
                     echo 'Starting Git checkout...'
                     git branch: 'main',
-                        url: 'https://github.com/MolkaZaoui/Stock.git',
+                        url: 'git@github.com:MolkaZaoui/Stock.git',
                         credentialsId: 'privatekey' // Jenkins credentials ID for GitHub SSH key
                 }
             }
