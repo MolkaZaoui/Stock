@@ -6,6 +6,7 @@ pipeline {
     }
 
     environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Jenkins credentials ID for Docker Hub
         IMAGE_NAME_SERVER = 'molka0204/stock-server' // Docker Hub username
         IMAGE_NAME_CLIENT = 'molka0204/stock-client' // Docker Hub username
     }
@@ -22,24 +23,7 @@ pipeline {
             }
         }
 
-        stage('Check for Changes') {
-            steps {
-                script {
-                    echo 'Checking for changes in backend and frontend...'
-
-                    // Detect changes in the backend folder
-                    def backendChanged = sh(script: 'git diff --name-only HEAD~1 backend', returnStdout: true).trim()
-                    env.BACKEND_CHANGED = backendChanged ? 'true' : 'false'
-                    echo backendChanged ? "Changes detected in backend" : "No changes detected in backend"
-
-                    // Detect changes in the frontend folder
-                    def frontendChanged = sh(script: 'git diff --name-only HEAD~1 frontend', returnStdout: true).trim()
-                    env.FRONTEND_CHANGED = frontendChanged ? 'true' : 'false'
-                    echo frontendChanged ? "Changes detected in frontend" : "No changes detected in frontend"
-                }
-            }
-        }
-
+       
         stage('Build Images') {
             parallel {
                 stage('Build Backend Image') {
@@ -62,7 +46,7 @@ pipeline {
                     steps {
                         script {
                             echo 'Building frontend image...'
-                            dir('frontend') {
+                            dir('client') {
                                 dockerImageClient = docker.build(IMAGE_NAME_CLIENT)
                             }
                         }
