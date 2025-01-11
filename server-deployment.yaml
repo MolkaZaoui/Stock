@@ -11,6 +11,9 @@ spec:
     metadata:
       labels:
         app: stock-server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9101" 
     spec:
       containers:
         - name: server2
