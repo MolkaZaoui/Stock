@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: stock-server
+  template:
+    metadata:
+      labels:
+        app: stock-server
+    spec:
+      containers:
+        - name: server2
+          image: molka0204/stock-server:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: app-configmap
